@@ -1,37 +1,39 @@
 package client
 
 import (
+	"chat-app/pkg/models"
 	"fmt"
 	"log"
 	"math/rand"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"wantsome.ro/messagingapp/pkg/models"
 )
 
 func RunClient() {
 	url := "ws://localhost:8080/ws"
 	randId := rand.Intn(10)
-	message := models.Message{Message: fmt.Sprintf("Hello world from my client %d !", randId), UserName: fmt.Sprintf("Client %d", randId)}
+	message := models.Message{Message: fmt.Sprintf("Hello world from my client %d!", randId), UserName: fmt.Sprintf("Client %d", randId)}
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
+
 	if err != nil {
-		log.Fatalf("error dialing %s\n", err)
+		log.Fatalf("error dialing %s", err)
 	}
 	defer c.Close()
 
 	done := make(chan bool)
+
 	// reading server messages
 	go func() {
 		defer close(done)
 		for {
-			_, message, err := c.ReadMessage()
+			_, msg, err := c.ReadMessage()
 			if err != nil {
-				log.Printf("error reading: %s\n", err)
+				log.Printf("error reading: %s\n", err.Error())
 				return
 			}
-			fmt.Printf("Got message: %s\n", message)
+			fmt.Printf("got message: %s\n", msg)
 		}
 	}()
 

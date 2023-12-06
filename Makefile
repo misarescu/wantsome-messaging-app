@@ -1,6 +1,12 @@
-build: test
-	@echo "Building go binaries ... "
-	@mkdir -p ./bin && go build -o ./bin ./cmd/...
+build: 
+	@mkdir -p ./bin 
+	@go build -o ./bin ./cmd/...
 
-test:
-	go test ./...	
+run-server:
+	bin/server $(ARGS)
+
+run-client:
+	bin/client $(ARGS)
+
+clean:
+	rm -rf bin/

@@ -1,6 +1,6 @@
 package main
 
-import "wantsome.ro/messagingapp/internal/client"
+import "chat-app/internal/client"
 
 func main() {
 	client.RunClient()
