@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"chat-app/pkg/models"
 	"fmt"
 	"sync"
 
@@ -8,62 +9,65 @@ import (
 )
 
 type NotFoundError struct {
-	Id string
+	Id int
 }
 
-func (c *NotFoundError) Error() string {
-	return fmt.Sprintf("Connection not found with id: %s", c.Id)
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("Connection not found with id: %d", e.Id)
 }
 
 type BroadcastError struct {
-	Ids []string
+	Users []*models.User
 }
 
-func (b *BroadcastError) Error() string {
-	return fmt.Sprintf("Error broadcasting to connections with ids:\n %s\n", b.Ids)
+func (e *BroadcastError) Error() string {
+	var idSlice []int
+	for _, user := range e.Users {
+		idSlice = append(idSlice, user.Id)
+	}
+	return fmt.Sprintf("Error broadcasting to connections with ids:\n %d\n", idSlice)
 }
 
 type ConnectionsMap struct {
 	m  sync.Mutex;
-	userConnections  map[*websocket.Conn]string;
+	userConnections  map[*websocket.Conn]*models.User;
 }
 
-func (cm *ConnectionsMap) CreateConnection(connection *websocket.Conn, id string) *NotFoundError { 
+func (cm *ConnectionsMap) CreateConnection(connection *websocket.Conn, user *models.User) *NotFoundError { 
 	// create connection only if it doesn't exist
 	cm.m.Lock()
 	if _, ok := cm.userConnections[connection]; !ok{
-		cm.userConnections[connection] = id
+		cm.userConnections[connection] = user
 		cm.m.Unlock()
 		return nil
 	} else {
 		cm.m.Unlock()
-		return &NotFoundError{Id: id}
+		return &NotFoundError{Id: user.Id}
 	} 
 }
 
-func (cm *ConnectionsMap) UpdateConnection(connection *websocket.Conn, id string) *NotFoundError { 
+func (cm *ConnectionsMap) UpdateConnection(connection *websocket.Conn, user *models.User) *NotFoundError { 
 	// update connection only if it does exist
 	cm.m.Lock()
 	if _, ok := cm.userConnections[connection]; ok{
-		cm.userConnections[connection] = id
+		cm.userConnections[connection] = user
 		cm.m.Unlock()
 		return nil
 	} else {
 		cm.m.Unlock()
-		return &NotFoundError{Id: id}
+		return &NotFoundError{Id: user.Id}
 	} 
 }
 
-func (cm *ConnectionsMap) GetConnectionId(connection *websocket.Conn) (string, *NotFoundError) { 
+func (cm *ConnectionsMap) GetConnectionId(connection *websocket.Conn) (*models.User, *NotFoundError) { 
 	// update connection only if it does exist
 	cm.m.Lock()
-	if id, ok := cm.userConnections[connection]; ok{
-		cm.userConnections[connection] = id
+	if user, ok := cm.userConnections[connection]; ok{
 		cm.m.Unlock()
-		return id, nil
+		return user, nil
 	} else {
 		cm.m.Unlock()
-		return "", &NotFoundError{Id: id}
+		return nil, &NotFoundError{Id: user.Id}
 	} 
 }
 
@@ -90,13 +94,13 @@ func (cm *ConnectionsMap) BroadcastMessage(msg string) *BroadcastError {
 	cm.m.Lock()
 	for conn := range cm.userConnections {
 		if err := conn.WriteJSON(msg); err != nil{
-			id := cm.userConnections[conn]
-			berr.Ids = append(berr.Ids, id)
+			user := cm.userConnections[conn]
+			berr.Users = append(berr.Users, user)
 			conn.Close()
 			delete(cm.userConnections,conn)
 		}
 	}
-	if len(berr.Ids) == 0 {
+	if len(berr.Users) == 0 {
 		return nil
 	} else {
 		return berr
