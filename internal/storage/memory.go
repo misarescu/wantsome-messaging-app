@@ -53,23 +53,24 @@ func NewMemoryStorage() *MemoryStorage {
 	}
 }
 
-func (s *MemoryStorage) Get(id int) *models.User {
+func (s *MemoryStorage) GetUserById(id int) *models.User {
 	return s.users[id]
 }
 
-func (s *MemoryStorage) GetAll() []*models.User {
+func (s *MemoryStorage) GetAllUsers() []*models.User {
 	return s.users
 }
 
-func (s *MemoryStorage) Remove(id int) *models.User {
-	user := s.Get(id)
+func (s *MemoryStorage) RemoveUserById(id int) *models.User {
+	user := s.GetUserById(id)
 
 	s.users = append(s.users[:id], s.users[id+1:]...)
 
 	return user
 }
 
-func (s *MemoryStorage) Update(id int, u *models.User) *models.User {
+func (s *MemoryStorage) UpdateUser(u *models.User) *models.User {
+	id := u.Id
 	s.users[id] = u
 
 	return s.users[id]
