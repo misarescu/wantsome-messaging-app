@@ -1,39 +1,18 @@
-package storage
+package models
 
 import (
-	"chat-app/pkg/models"
-	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
-type NotFoundError struct {
-	Id int
-}
-
-func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("Connection not found with id: %d", e.Id)
-}
-
-type BroadcastError struct {
-	Users []*models.User
-}
-
-func (e *BroadcastError) Error() string {
-	var idSlice []int
-	for _, user := range e.Users {
-		idSlice = append(idSlice, user.Id)
-	}
-	return fmt.Sprintf("Error broadcasting to connections with ids:\n %d\n", idSlice)
-}
-
 type Room struct {
 	m  sync.Mutex;
-	userConnections  map[*websocket.Conn]*models.User;
+	userConnections  map[*websocket.Conn]*User;
+	Id	int
 }
 
-func (r *Room) CreateConnection(connection *websocket.Conn, user *models.User) *NotFoundError { 
+func (r *Room) CreateConnection(connection *websocket.Conn, user *User) *NotFoundError { 
 	// create connection only if it doesn't exist
 	r.m.Lock()
 	if _, ok := r.userConnections[connection]; !ok{
@@ -46,7 +25,7 @@ func (r *Room) CreateConnection(connection *websocket.Conn, user *models.User) *
 	} 
 }
 
-func (r *Room) UpdateConnection(connection *websocket.Conn, user *models.User) *NotFoundError { 
+func (r *Room) UpdateConnection(connection *websocket.Conn, user *User) *NotFoundError { 
 	// update connection only if it does exist
 	r.m.Lock()
 	if _, ok := r.userConnections[connection]; ok{
@@ -59,7 +38,7 @@ func (r *Room) UpdateConnection(connection *websocket.Conn, user *models.User) *
 	} 
 }
 
-func (r *Room) GetConnectionId(connection *websocket.Conn) (*models.User, *NotFoundError) { 
+func (r *Room) GetConnectionId(connection *websocket.Conn) (*User, *NotFoundError) { 
 	// update connection only if it does exist
 	r.m.Lock()
 	if user, ok := r.userConnections[connection]; ok{
