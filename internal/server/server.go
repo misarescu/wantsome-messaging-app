@@ -32,7 +32,7 @@ var shutdown os.Signal = syscall.SIGUSR1
 
 func (s *Server) RunServer() {
 	// http.HandleFunc("/", home)
-	http.HandleFunc("/ws", handleConnections)
+	http.HandleFunc("/ws", s.handleConnections)
 
 	go handleMsg()
 
@@ -51,12 +51,13 @@ func (s *Server) RunServer() {
 	signal := <-stop
 	loggers.InfoLogger.Printf("Shutting down server ...")
 
-	m.Lock()
-	for conn := range userConnections {
-		conn.Close()
-		delete(userConnections, conn)
-	}
-	m.Unlock()
+	// m.Lock()
+	// for conn := range userConnections {
+	// 	conn.Close()
+	// 	delete(userConnections, conn)
+	// }
+	// m.Unlock()
+	
 
 	server.Shutdown(nil)
 

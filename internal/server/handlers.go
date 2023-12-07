@@ -17,11 +17,8 @@ var (
 	}
 )
 
-// func home(w http.ResponseWriter, r *http.Request) {
-// 	fmt.Fprintf(w, "Hello world from my server!")
-// }
 
-func handleConnections(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleConnections(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Printf("got error upgrading connection %s\n", err)
@@ -29,9 +26,6 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	m.Lock()
-	userConnections[conn] = ""
-	m.Unlock()
 	fmt.Printf("Connected client")
 
 	for {
@@ -66,4 +60,11 @@ func handleMsg() {
 		}
 		m.Unlock()
 	}
+}
+
+func (s *Server) handleGetAllUsers(w http.ResponseWriter, r *http.Request) error {
+	users, _ := s.store.GetAllUsers()
+	writeJSON(w, http.StatusOK, users)
+
+	return nil
 }

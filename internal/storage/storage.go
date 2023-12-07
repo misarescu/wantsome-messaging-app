@@ -7,4 +7,5 @@ type Storage interface {
 	GetAllUsers() ([]*models.User, *models.NotFoundError)
 	RemoveUserById(int) (*models.User, *models.NotFoundError)
 	UpdateUser(*models.User) (*models.User, *models.NotFoundError)
+	GetAllRooms() ([]*models.Room, *models.NotFoundError)
 }

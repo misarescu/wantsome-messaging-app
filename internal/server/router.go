@@ -37,10 +37,3 @@ func (s *Server) initRouter() {
 
 	http.Handle("/", s.router)
 }
-
-func (s *Server) handleGetAllUsers(w http.ResponseWriter, r *http.Request) error {
-	users, _ := s.store.GetAllUsers()
-	writeJSON(w, http.StatusOK, users)
-
-	return nil
-}

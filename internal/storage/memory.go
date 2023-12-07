@@ -59,6 +59,14 @@ func NewMemoryStorage() *MemoryStorage {
 				Name: "Jake",
 			},
 		},
+		rooms: map[int]*models.Room{
+			0: {
+				Id: 0,
+			},
+			1: {
+				Id: 1,
+			},
+		},
 	}
 }
 
@@ -106,4 +114,14 @@ func (s *MemoryStorage) UpdateUser(u *models.User) (*models.User, *models.NotFou
 		um.Unlock()
 		return nil, &models.NotFoundError{Id: id}
 	}
+}
+
+func (s *MemoryStorage) GetAllRooms() ([]*models.Room, *models.NotFoundError){
+	var result []*models.Room
+	rm.Lock()
+	for _, room := range s.rooms {
+		result = append(result, room)
+	}
+	rm.Unlock()
+	return result, nil
 }
