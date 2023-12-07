@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	broadcast       = make(chan models.Message)
-	upgrader        = websocket.Upgrader{
+	broadcast = make(chan models.Message)
+	upgrader  = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},

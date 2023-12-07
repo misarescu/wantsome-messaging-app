@@ -39,7 +39,7 @@ func (s *Server) initRouter() {
 }
 
 func (s *Server) handleGetAllUsers(w http.ResponseWriter, r *http.Request) error {
-	users := s.store.GetAll()
+	users, _ := s.store.GetAllUsers()
 	writeJSON(w, http.StatusOK, users)
 
 	return nil
