@@ -75,27 +75,35 @@ func (s *MemoryStorage) GetUserById(id int) (*models.User, *models.NotFoundError
 
 func (s *MemoryStorage) GetAllUsers() ([]*models.User, *models.NotFoundError) {
 	var result []*models.User
+	um.Lock()
 	for _, user := range s.users {
 		result = append(result, user)
 	}
+	um.Unlock()
 	return result, nil
 }
 
 func (s *MemoryStorage) RemoveUserById(id int) (*models.User, *models.NotFoundError) {
+	um.Lock()
 	if user, err := s.GetUserById(id); err != nil {
 		delete(s.users, id)
+		um.Unlock()
 		return user, nil
 	} else {
+		um.Unlock()
 		return nil, &models.NotFoundError{Id: id}
 	}
 }
 
 func (s *MemoryStorage) UpdateUser(u *models.User) (*models.User, *models.NotFoundError) {
 	id := u.Id
+	um.Lock()
 	if _, ok := s.users[id]; ok {
 		s.users[id] = u
+		um.Unlock()
 		return s.users[id], nil
 	} else {
+		um.Unlock()
 		return nil, &models.NotFoundError{Id: id}
 	}
 }
