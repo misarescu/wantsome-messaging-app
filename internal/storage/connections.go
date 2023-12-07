@@ -28,76 +28,76 @@ func (e *BroadcastError) Error() string {
 	return fmt.Sprintf("Error broadcasting to connections with ids:\n %d\n", idSlice)
 }
 
-type ConnectionsMap struct {
+type Room struct {
 	m  sync.Mutex;
 	userConnections  map[*websocket.Conn]*models.User;
 }
 
-func (cm *ConnectionsMap) CreateConnection(connection *websocket.Conn, user *models.User) *NotFoundError { 
+func (r *Room) CreateConnection(connection *websocket.Conn, user *models.User) *NotFoundError { 
 	// create connection only if it doesn't exist
-	cm.m.Lock()
-	if _, ok := cm.userConnections[connection]; !ok{
-		cm.userConnections[connection] = user
-		cm.m.Unlock()
+	r.m.Lock()
+	if _, ok := r.userConnections[connection]; !ok{
+		r.userConnections[connection] = user
+		r.m.Unlock()
 		return nil
 	} else {
-		cm.m.Unlock()
+		r.m.Unlock()
 		return &NotFoundError{Id: user.Id}
 	} 
 }
 
-func (cm *ConnectionsMap) UpdateConnection(connection *websocket.Conn, user *models.User) *NotFoundError { 
+func (r *Room) UpdateConnection(connection *websocket.Conn, user *models.User) *NotFoundError { 
 	// update connection only if it does exist
-	cm.m.Lock()
-	if _, ok := cm.userConnections[connection]; ok{
-		cm.userConnections[connection] = user
-		cm.m.Unlock()
+	r.m.Lock()
+	if _, ok := r.userConnections[connection]; ok{
+		r.userConnections[connection] = user
+		r.m.Unlock()
 		return nil
 	} else {
-		cm.m.Unlock()
+		r.m.Unlock()
 		return &NotFoundError{Id: user.Id}
 	} 
 }
 
-func (cm *ConnectionsMap) GetConnectionId(connection *websocket.Conn) (*models.User, *NotFoundError) { 
+func (r *Room) GetConnectionId(connection *websocket.Conn) (*models.User, *NotFoundError) { 
 	// update connection only if it does exist
-	cm.m.Lock()
-	if user, ok := cm.userConnections[connection]; ok{
-		cm.m.Unlock()
+	r.m.Lock()
+	if user, ok := r.userConnections[connection]; ok{
+		r.m.Unlock()
 		return user, nil
 	} else {
-		cm.m.Unlock()
+		r.m.Unlock()
 		return nil, &NotFoundError{Id: user.Id}
 	} 
 }
 
-func (cm *ConnectionsMap) DeleteConnection(connection *websocket.Conn) { 
+func (r *Room) DeleteConnection(connection *websocket.Conn) { 
 	// delete connection
-	cm.m.Lock()
-	delete(cm.userConnections, connection)
-	cm.m.Unlock()
+	r.m.Lock()
+	delete(r.userConnections, connection)
+	r.m.Unlock()
 	
 }
 
-func (cm *ConnectionsMap) DeleteAllConnection() {
+func (r *Room) DeleteAllConnection() {
 	// delete connections
-	cm.m.Lock()
-	for conn := range cm.userConnections {
+	r.m.Lock()
+	for conn := range r.userConnections {
 		conn.Close()
-		delete(cm.userConnections,conn)
+		delete(r.userConnections,conn)
 	}
-	cm.m.Unlock()
+	r.m.Unlock()
 }
 
-func (cm *ConnectionsMap) BroadcastMessage(msg string) *BroadcastError {
+func (r *Room) BroadcastMessage(msg string) *BroadcastError {
 	berr := &BroadcastError{}
-	cm.m.Lock()
-	for conn := range cm.userConnections {
+	r.m.Lock()
+	for conn := range r.userConnections {
 		if err := conn.WriteJSON(msg); err != nil{
-			user := cm.userConnections[conn]
+			user := r.userConnections[conn]
 			berr.Users = append(berr.Users, user)
 			conn.Close()
-			delete(cm.userConnections,conn)
+			delete(r.userConnections,conn)
 		}
 	}
 	if len(berr.Users) == 0 {
