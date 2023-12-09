@@ -28,6 +28,9 @@ func writeJSON(w http.ResponseWriter, code int, data any) error {
 func (s *Server) initRouter() {
 	s.router = mux.NewRouter()
 
+	chatRouter := s.router.PathPrefix("/chat").Subrouter()
+	chatRouter.HandleFunc("/room/{id}", makeHandler(s.handleRoomChat))
+
 	userRouter := s.router.PathPrefix("/users").Subrouter()
 	// userRouter.HandleFunc("/{id}", makeHandler(s.handleGetUserByID)).Methods("GET")
 	// userRouter.HandleFunc("/{id}", makeHandler(s.handleRemoveUserById)).Methods("DELETE")

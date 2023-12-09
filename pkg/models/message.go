@@ -1,6 +1,6 @@
 package models
 
 type Message struct {
-	Message  string
-	UserName string
+	Message  string `json:"message"`
+	UserId 	 int		`json:"user_id"`
 }

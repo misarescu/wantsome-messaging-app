@@ -9,6 +9,7 @@ import (
 type Room struct {
 	m               sync.Mutex
 	userConnections map[*websocket.Conn]*User
+	Broadcast 			chan Message
 	Id              int
 }
 
@@ -38,7 +39,7 @@ func (r *Room) UpdateConnection(connection *websocket.Conn, user *User) *NotFoun
 	}
 }
 
-func (r *Room) GetConnectionId(connection *websocket.Conn) (*User, *NotFoundError) {
+func (r *Room) GetUserByConnection(connection *websocket.Conn) (*User, *NotFoundError) {
 	// update connection only if it does exist
 	r.m.Lock()
 	if user, ok := r.userConnections[connection]; ok {
@@ -79,6 +80,7 @@ func (r *Room) BroadcastMessage(msg string) *BroadcastError {
 			delete(r.userConnections, conn)
 		}
 	}
+	r.m.Unlock()
 	if len(berr.Users) == 0 {
 		return nil
 	} else {

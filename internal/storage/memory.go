@@ -93,7 +93,7 @@ func (s *MemoryStorage) GetAllUsers() ([]*models.User, *models.NotFoundError) {
 
 func (s *MemoryStorage) RemoveUserById(id int) (*models.User, *models.NotFoundError) {
 	um.Lock()
-	if user, err := s.GetUserById(id); err != nil {
+	if user, err := s.GetUserById(id); err == nil {
 		delete(s.users, id)
 		um.Unlock()
 		return user, nil
@@ -124,4 +124,27 @@ func (s *MemoryStorage) GetAllRooms() ([]*models.Room, *models.NotFoundError){
 	}
 	rm.Unlock()
 	return result, nil
+}
+
+func (s *MemoryStorage) GetRoomById(id int) (*models.Room, *models.NotFoundError) {
+	rm.Lock()
+	if room, ok := s.rooms[id]; ok{
+		rm.Unlock()
+		return room, nil
+	} else {
+		rm.Unlock()
+		return nil, &models.NotFoundError{Id:id}
+	}
+}
+
+func (s *MemoryStorage) RemoveRoomById(id int) (*models.Room, *models.NotFoundError){
+	rm.Lock()
+	if room, err := s.GetRoomById(id); err == nil {
+		delete(s.rooms, room.Id)
+		rm.Unlock()
+		return room, nil
+	} else {
+		rm.Unlock()
+		return nil, &models.NotFoundError{Id:id}
+	}
 }

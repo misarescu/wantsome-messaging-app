@@ -32,7 +32,6 @@ var shutdown os.Signal = syscall.SIGUSR1
 
 func (s *Server) RunServer() {
 	// http.HandleFunc("/", home)
-	http.HandleFunc("/ws", s.handleConnections)
 
 	go handleMsg()
 

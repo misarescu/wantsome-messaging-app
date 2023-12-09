@@ -7,7 +7,7 @@ type NotFoundError struct {
 }
 
 func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("Connection not found with id: %d", e.Id)
+	return fmt.Sprintf("Item not found with id: %d", e.Id)
 }
 
 type BroadcastError struct {
@@ -20,4 +20,10 @@ func (e *BroadcastError) Error() string {
 		idSlice = append(idSlice, user.Id)
 	}
 	return fmt.Sprintf("Error broadcasting to connections with ids:\n %d\n", idSlice)
+}
+
+type ConnectionError struct {}
+
+func (e *ConnectionError) Error() string {
+	return "Connection error"
 }
