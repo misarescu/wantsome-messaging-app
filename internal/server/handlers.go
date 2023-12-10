@@ -3,6 +3,8 @@ package server
 import (
 	"chat-app/pkg/loggers"
 	"chat-app/pkg/models"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -104,4 +106,60 @@ func (s *Server) handleGetUserById(w http.ResponseWriter, r *http.Request) error
 	writeJSON(w,http.StatusOK, user)
 	
 	return nil
+}
+
+func (s *Server) handleRemoveUserById(w http.ResponseWriter, r *http.Request) error {
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		return err
+	}
+	user, err := s.store.RemoveUserById(id)
+	if err != nil {
+		return err 
+	}
+	loggers.WarningLogger.Printf("user %+v was deleted\n", user)
+	writeJSON(w,http.StatusOK, user)
+
+	return nil
+}
+
+func (s *Server) handleUpdateUserById(w http.ResponseWriter, r *http.Request) error {
+	if headerContentType := r.Header.Get("Content-Type"); headerContentType != "application/json" {
+		return &models.BadRequestError{Message: "Content type needs to be json"}
+	}
+
+	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil{
+		return &models.BadRequestError{Message: "id type needs to be integer"}
+	}
+	user, err := s.store.GetUserById(id)
+
+	if err != nil {
+		return &models.BadRequestError{Message: err.Error()}
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(user); err != nil{
+		var unmarshallErr *json.UnmarshalTypeError
+
+		if errors.As(err, &unmarshallErr) {
+			// return models.NewRequestError("Bad Request: Wrong type provided")
+			return &models.BadRequestError{Message: "Wrong type provided"}
+		} else {
+			return &models.BadRequestError{Message: err.Error()}
+		}
+	}
+
+	retUser, err := s.store.UpdateUser(user)
+
+	if err != nil {
+		return &models.BadRequestError{Message: err.Error()}
+	}
+
+	writeJSON(w,http.StatusOK, retUser)
+
+	return nil
+
 }

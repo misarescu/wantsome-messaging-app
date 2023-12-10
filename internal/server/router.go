@@ -13,7 +13,6 @@ type apiHandler func(http.ResponseWriter, *http.Request) error
 
 func makeHandler(f apiHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		loggers.InfoLogger.Printf("Responded with: %+v\n", models.ResponseMessage{Message: "valid object",ErrorStatus: true})
 		// handle bad requests
 		if err := f(w, r); err != nil {
 			writeJSON(w, http.StatusBadRequest, models.ResponseMessage{Message: err.Error(),ErrorStatus: true})
@@ -45,10 +44,9 @@ func (s *Server) initRouter() {
 
 	userRouter := s.router.PathPrefix("/users").Subrouter()
 	userRouter.HandleFunc("/{id}", makeHandler(s.handleGetUserById)).Methods("GET")
-	// userRouter.HandleFunc("/{id}", makeHandler(s.handleRemoveUserById)).Methods("DELETE")
-	// userRouter.HandleFunc("/{id}", makeHandler(s.handleUpdateUserById)).Methods("PUT")
+	userRouter.HandleFunc("/{id}", makeHandler(s.handleRemoveUserById)).Methods("DELETE")
+	userRouter.HandleFunc("/{id}", makeHandler(s.handleUpdateUserById)).Methods("PUT")
 	userRouter.HandleFunc("", makeHandler(s.handleGetAllUsers)).Methods("GET")
-	// userRouter.HandleFunc("", makeHandler(s.handleUpdateMultipleUsers)).Methods("PUT")
 
 	http.Handle("/", s.router)
 }
