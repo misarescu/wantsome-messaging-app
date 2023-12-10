@@ -1,6 +1,8 @@
 package models
 
 import (
+	"chat-app/pkg/loggers"
+	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -8,16 +10,29 @@ import (
 
 type Room struct {
 	m               sync.Mutex
-	userConnections map[*websocket.Conn]*User
-	Broadcast 			chan Message
+	UserConnections map[*websocket.Conn]*User
 	Id              int
 }
 
-func (r *Room) CreateConnection(connection *websocket.Conn, user *User) *NotFoundError {
+func (r *Room) CreateConnection(connection *websocket.Conn, user *User) error {
 	// create connection only if it doesn't exist
 	r.m.Lock()
-	if _, ok := r.userConnections[connection]; !ok {
-		r.userConnections[connection] = user
+	if _, ok := r.UserConnections[connection]; !ok {
+		
+		r.UserConnections[connection] = user
+		r.m.Unlock()
+		return nil
+	} else {
+		r.m.Unlock()
+		return fmt.Errorf("user %d already has a connection", user.Id)
+	}
+}
+
+func (r *Room) UpdateConnection(connection *websocket.Conn, user *User) error {
+	// update connection only if it does exist
+	r.m.Lock()
+	if _, ok := r.UserConnections[connection]; ok {
+		r.UserConnections[connection] = user
 		r.m.Unlock()
 		return nil
 	} else {
@@ -26,23 +41,10 @@ func (r *Room) CreateConnection(connection *websocket.Conn, user *User) *NotFoun
 	}
 }
 
-func (r *Room) UpdateConnection(connection *websocket.Conn, user *User) *NotFoundError {
+func (r *Room) GetUserByConnection(connection *websocket.Conn) (*User, error) {
 	// update connection only if it does exist
 	r.m.Lock()
-	if _, ok := r.userConnections[connection]; ok {
-		r.userConnections[connection] = user
-		r.m.Unlock()
-		return nil
-	} else {
-		r.m.Unlock()
-		return &NotFoundError{Id: user.Id}
-	}
-}
-
-func (r *Room) GetUserByConnection(connection *websocket.Conn) (*User, *NotFoundError) {
-	// update connection only if it does exist
-	r.m.Lock()
-	if user, ok := r.userConnections[connection]; ok {
+	if user, ok := r.UserConnections[connection]; ok {
 		r.m.Unlock()
 		return user, nil
 	} else {
@@ -54,7 +56,7 @@ func (r *Room) GetUserByConnection(connection *websocket.Conn) (*User, *NotFound
 func (r *Room) DeleteConnection(connection *websocket.Conn) {
 	// delete connection
 	r.m.Lock()
-	delete(r.userConnections, connection)
+	delete(r.UserConnections, connection)
 	r.m.Unlock()
 
 }
@@ -62,22 +64,25 @@ func (r *Room) DeleteConnection(connection *websocket.Conn) {
 func (r *Room) DeleteAllConnection() {
 	// delete connections
 	r.m.Lock()
-	for conn := range r.userConnections {
+	for conn := range r.UserConnections {
 		conn.Close()
-		delete(r.userConnections, conn)
+		delete(r.UserConnections, conn)
 	}
 	r.m.Unlock()
 }
 
-func (r *Room) BroadcastMessage(msg string) *BroadcastError {
+func (r *Room) BroadcastMessage(msg ResponseMessage) error {
 	berr := &BroadcastError{}
 	r.m.Lock()
-	for conn := range r.userConnections {
-		if err := conn.WriteJSON(msg); err != nil {
-			user := r.userConnections[conn]
+	loggers.InfoLogger.Printf("connections present: %+v\n", r.UserConnections)
+	for conn := range r.UserConnections {
+		err := conn.WriteJSON(msg);
+		if err != nil {
+			user := r.UserConnections[conn]
 			berr.Users = append(berr.Users, user)
 			conn.Close()
-			delete(r.userConnections, conn)
+			delete(r.UserConnections, conn)
+			loggers.WarningLogger.Printf("deleted conn %+v", conn)
 		}
 	}
 	r.m.Unlock()

@@ -9,4 +9,6 @@ run-client:
 	bin/client $(ARGS)
 
 clean:
-	rm -rf bin/
+	@rm -rf bin/
+
+rebuild: clean build

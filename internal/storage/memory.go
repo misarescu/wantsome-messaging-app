@@ -3,6 +3,8 @@ package storage
 import (
 	"chat-app/pkg/models"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 var (
@@ -62,15 +64,17 @@ func NewMemoryStorage() *MemoryStorage {
 		rooms: map[int]*models.Room{
 			0: {
 				Id: 0,
+				UserConnections: make(map[*websocket.Conn]*models.User),
 			},
 			1: {
 				Id: 1,
+				UserConnections: make(map[*websocket.Conn]*models.User),
 			},
 		},
 	}
 }
 
-func (s *MemoryStorage) GetUserById(id int) (*models.User, *models.NotFoundError) {
+func (s *MemoryStorage) GetUserById(id int) (*models.User, error) {
 	um.Lock()
 	if result, ok := s.users[id]; ok {
 		um.Unlock()
@@ -81,7 +85,7 @@ func (s *MemoryStorage) GetUserById(id int) (*models.User, *models.NotFoundError
 	}
 }
 
-func (s *MemoryStorage) GetAllUsers() ([]*models.User, *models.NotFoundError) {
+func (s *MemoryStorage) GetAllUsers() ([]*models.User, error) {
 	var result []*models.User
 	um.Lock()
 	for _, user := range s.users {
@@ -91,7 +95,7 @@ func (s *MemoryStorage) GetAllUsers() ([]*models.User, *models.NotFoundError) {
 	return result, nil
 }
 
-func (s *MemoryStorage) RemoveUserById(id int) (*models.User, *models.NotFoundError) {
+func (s *MemoryStorage) RemoveUserById(id int) (*models.User, error) {
 	um.Lock()
 	if user, err := s.GetUserById(id); err == nil {
 		delete(s.users, id)
@@ -103,7 +107,7 @@ func (s *MemoryStorage) RemoveUserById(id int) (*models.User, *models.NotFoundEr
 	}
 }
 
-func (s *MemoryStorage) UpdateUser(u *models.User) (*models.User, *models.NotFoundError) {
+func (s *MemoryStorage) UpdateUser(u *models.User) (*models.User, error) {
 	id := u.Id
 	um.Lock()
 	if _, ok := s.users[id]; ok {
@@ -116,7 +120,7 @@ func (s *MemoryStorage) UpdateUser(u *models.User) (*models.User, *models.NotFou
 	}
 }
 
-func (s *MemoryStorage) GetAllRooms() ([]*models.Room, *models.NotFoundError){
+func (s *MemoryStorage) GetAllRooms() ([]*models.Room, error){
 	var result []*models.Room
 	rm.Lock()
 	for _, room := range s.rooms {
@@ -126,7 +130,7 @@ func (s *MemoryStorage) GetAllRooms() ([]*models.Room, *models.NotFoundError){
 	return result, nil
 }
 
-func (s *MemoryStorage) GetRoomById(id int) (*models.Room, *models.NotFoundError) {
+func (s *MemoryStorage) GetRoomById(id int) (*models.Room, error) {
 	rm.Lock()
 	if room, ok := s.rooms[id]; ok{
 		rm.Unlock()
@@ -137,7 +141,7 @@ func (s *MemoryStorage) GetRoomById(id int) (*models.Room, *models.NotFoundError
 	}
 }
 
-func (s *MemoryStorage) RemoveRoomById(id int) (*models.Room, *models.NotFoundError){
+func (s *MemoryStorage) RemoveRoomById(id int) (*models.Room, error){
 	rm.Lock()
 	if room, err := s.GetRoomById(id); err == nil {
 		delete(s.rooms, room.Id)
