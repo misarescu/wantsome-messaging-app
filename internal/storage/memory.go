@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"chat-app/pkg/loggers"
 	"chat-app/pkg/models"
+	"math/rand"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -62,16 +64,42 @@ func NewMemoryStorage() *MemoryStorage {
 			},
 		},
 		rooms: map[int]*models.Room{
-			0: {
-				Id: 0,
-				UserConnections: make(map[*websocket.Conn]*models.User),
-			},
 			1: {
 				Id: 1,
+				Name: "Boys",
+				UserConnections: make(map[*websocket.Conn]*models.User),
+			},
+			2: {
+				Id: 2,
+				Name: "Girls",
 				UserConnections: make(map[*websocket.Conn]*models.User),
 			},
 		},
 	}
+}
+
+func (s *MemoryStorage) CreateUser(user models.UserDTO) (*models.User, error){
+	um.Lock()
+	// find if username is unique
+	for _, usr := range s.users {
+		if usr.Name == user.Name {
+			um.Unlock()
+			return nil, &models.BadRequestError{Message: "username already exists!"}
+		}
+	}
+
+	// generate new ids until it finds a unique one
+	id := rand.Int()
+	for _, ok := s.users[id]; ok ;{
+		id = rand.Int()
+	}
+	loggers.WarningLogger.Printf("found unique id: %d", id)
+
+	newUser := &models.User{Id: id, Name: user.Name}
+	s.users[id] = newUser
+	um.Unlock()
+
+	return newUser, nil
 }
 
 func (s *MemoryStorage) GetUserById(id int) (*models.User, error) {
@@ -118,6 +146,31 @@ func (s *MemoryStorage) UpdateUser(u *models.User) (*models.User, error) {
 		um.Unlock()
 		return nil, &models.NotFoundError{Id: id}
 	}
+}
+
+func (s *MemoryStorage) CreateRoom(room models.Room) (*models.Room, error){
+	rm.Lock()
+	// find if room name is unique
+	for _, roomIt := range s.rooms {
+		if roomIt.Name == room.Name {
+			rm.Unlock()
+			return nil, &models.BadRequestError{Message: "room already exists!"}
+		}
+	}
+
+	// generate new ids until it finds a unique one
+	id := rand.Int()
+	for _, ok := s.users[id]; ok ;{
+		id = rand.Int()
+	}
+
+	loggers.WarningLogger.Printf("found unique id: %d", id)
+	newRoom := &models.Room{UserConnections: make(map[*websocket.Conn]*models.User),Name: room.Name,Id:id,}
+
+	s.rooms[id] = newRoom
+	rm.Unlock()
+	
+	return newRoom, nil
 }
 
 func (s *MemoryStorage) GetAllRooms() ([]*models.Room, error){

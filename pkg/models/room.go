@@ -9,9 +9,10 @@ import (
 )
 
 type Room struct {
-	m               sync.Mutex
-	UserConnections map[*websocket.Conn]*User
-	Id              int
+	m               sync.Mutex `json:"-"`
+	UserConnections map[*websocket.Conn]*User `json:"-"`
+	Id              int `json:"id,omitempty"` // id 0 is forbidden
+	Name						string `json:"name"`
 }
 
 func (r *Room) CreateConnection(connection *websocket.Conn, user *User) error {
