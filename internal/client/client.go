@@ -66,6 +66,10 @@ func (c *Client) RunClient() {
 		reader := bufio.NewReader(os.Stdin)
 		for {
 			inputMessage, _ := reader.ReadString('\n')
+			if inputMessage == "(exit)\n"{
+				fmt.Println("quit...")
+				done <- true
+			}
 			err := conn.WriteJSON(models.UserMessage{UserId: c.UserId, Message: inputMessage})
 			if err != nil {
 				log.Printf("error writing %s\n", err)
@@ -76,4 +80,5 @@ func (c *Client) RunClient() {
 	}()
 
 	<-done
+	conn.WriteJSON(models.UserMessage{UserId: c.UserId, Message: "Left the Chat!"})
 }
