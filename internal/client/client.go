@@ -1,26 +1,42 @@
 package client
 
 import (
+	"bufio"
 	"chat-app/pkg/models"
+	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
-	"time"
+	"os"
 
 	"github.com/gorilla/websocket"
 )
 
-func RunClient() {
-	url := "ws://localhost:8080/ws"
-	randId := rand.Intn(10)
-	message := models.UserMessage{Message: fmt.Sprintf("Hello world from my client %d!", randId), UserId: randId}
 
-	c, _, err := websocket.DefaultDialer.Dial(url, nil)
+type Client struct {
+	Url string
+	UserId int
+	RoomId int
+}
+
+func NewClient(baseurl string, roomId, userId int) *Client{
+	// baseurl := "ws://localhost:8080/chatroom"
+	return &Client{
+		Url: fmt.Sprintf("%s/%d", baseurl, roomId),
+		UserId: userId,
+		RoomId: roomId,
+	}
+}
+
+func (c *Client) RunClient() {
+
+	conn, _, err := websocket.DefaultDialer.Dial(c.Url, nil)
 
 	if err != nil {
 		log.Fatalf("error dialing %s", err)
 	}
-	defer c.Close()
+	defer conn.Close()
+
+	conn.WriteJSON(models.UserMessage{UserId: c.UserId, Message: "Joined the Chat!"})
 
 	done := make(chan bool)
 
@@ -28,24 +44,34 @@ func RunClient() {
 	go func() {
 		defer close(done)
 		for {
-			_, msg, err := c.ReadMessage()
+			_, recvMessage, err := conn.ReadMessage()
 			if err != nil {
 				log.Printf("error reading: %s\n", err.Error())
 				return
 			}
-			fmt.Printf("got message: %s\n", msg)
+
+			var message models.ResponseMessage
+			err = json.Unmarshal(recvMessage, &message)
+			if err != nil {
+				log.Printf("error reading: %s\n", err.Error())
+				return
+			}
+
+			fmt.Printf("%s: %s\n", message.FromUser, message.Message)
 		}
 	}()
 
 	// writing messages to server
 	go func() {
+		reader := bufio.NewReader(os.Stdin)
 		for {
-			err := c.WriteJSON(message)
+			inputMessage, _ := reader.ReadString('\n')
+			err := conn.WriteJSON(models.UserMessage{UserId: c.UserId, Message: inputMessage})
 			if err != nil {
 				log.Printf("error writing %s\n", err)
 				return
 			}
-			time.Sleep(3 * time.Second)
+			fmt.Printf("->\t%s\n",inputMessage)
 		}
 	}()
 
