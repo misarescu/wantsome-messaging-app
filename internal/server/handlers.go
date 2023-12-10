@@ -81,7 +81,14 @@ func (s *Server) handleBroadcastRoomChat() {
 			}
 
 			if user, err := s.store.GetUserById(msg.UserMessage.UserId); err == nil{
-				room.BroadcastMessage(models.ResponseMessage{Message:msg.UserMessage.Message, FromUser:user.Name, ErrorStatus: false})
+				room.BroadcastMessage(
+					models.ResponseMessage{
+						Message:msg.UserMessage.Message, 
+						FromUser:user.Name, 
+						ErrorStatus: false,
+					}, 
+					user,
+				)
 			} else {
 				loggers.ErrorLogger.Printf("err: %s", err.Error())
 			}

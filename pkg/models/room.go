@@ -72,18 +72,20 @@ func (r *Room) DeleteAllConnection() {
 	r.m.Unlock()
 }
 
-func (r *Room) BroadcastMessage(msg ResponseMessage) error {
+func (r *Room) BroadcastMessage(msg ResponseMessage, ignoreUser *User) error {
 	berr := &BroadcastError{}
 	r.m.Lock()
 	loggers.InfoLogger.Printf("connections present: %+v\n", r.UserConnections)
-	for conn := range r.UserConnections {
-		err := conn.WriteJSON(msg);
-		if err != nil {
-			user := r.UserConnections[conn]
-			berr.Users = append(berr.Users, user)
-			conn.Close()
-			delete(r.UserConnections, conn)
-			loggers.WarningLogger.Printf("deleted conn %+v", conn)
+	for conn, user := range r.UserConnections {
+		if user != ignoreUser{
+			err := conn.WriteJSON(msg);
+			if err != nil {
+				user := r.UserConnections[conn]
+				berr.Users = append(berr.Users, user)
+				conn.Close()
+				delete(r.UserConnections, conn)
+				loggers.WarningLogger.Printf("deleted conn %+v", conn)
+			}
 		}
 	}
 	r.m.Unlock()
