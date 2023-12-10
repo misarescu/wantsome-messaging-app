@@ -5,6 +5,6 @@ type User struct {
 	Name string `json:"name"`
 }
 
-func ValidateUser(u *User) bool {
-	return true
+type UserDTO struct {
+	Name string `json:"name"`
 }

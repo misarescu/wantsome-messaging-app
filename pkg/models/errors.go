@@ -27,3 +27,11 @@ type ConnectionError struct {}
 func (e *ConnectionError) Error() string {
 	return "Connection error"
 }
+
+type BadRequestError struct {
+	Message string
+}
+
+func (e *BadRequestError) Error() string {
+	return fmt.Sprintf("Bad request: %s", e.Message)
+}
