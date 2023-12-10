@@ -15,7 +15,7 @@ import (
 
 var (
 	// broadcast = make(chan models.Message)
-	upgrader  = websocket.Upgrader{
+	upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
@@ -26,10 +26,10 @@ var (
 
 func (s *Server) handleReadRoomChat(w http.ResponseWriter, r *http.Request) error {
 	strRoomId := mux.Vars(r)["id"]
-	roomId, err := strconv.Atoi(strRoomId) 
+	roomId, err := strconv.Atoi(strRoomId)
 	if err != nil {
 		return fmt.Errorf("expected room id to be integer, but recieved: %s", strRoomId)
-	} 
+	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -51,14 +51,14 @@ func (s *Server) handleReadRoomChat(w http.ResponseWriter, r *http.Request) erro
 				loggers.WarningLogger.Printf("got error reading message %s\n", err.Error())
 				room.DeleteConnection(conn)
 				return &models.ConnectionError{}
-			} 
+			}
 
 			user, err := s.store.GetUserById(msg.UserId)
 
 			if err != nil {
 				return &models.NotFoundError{Id: msg.UserId}
 			}
-			
+
 			room.CreateConnection(conn, user)
 			loggers.InfoLogger.Printf("message recieved: %+v\n", msg)
 			s.broadcast <- models.RoomMessage{RoomId: roomId, UserMessage: msg}
@@ -73,20 +73,20 @@ func (s *Server) handleReadRoomChat(w http.ResponseWriter, r *http.Request) erro
 func (s *Server) handleBroadcastRoomChat() {
 	for {
 		select {
-		case msg:= <-s.broadcast :
+		case msg := <-s.broadcast:
 			room, err := s.store.GetRoomById(msg.RoomId)
 			if err != nil {
 				loggers.ErrorLogger.Printf("%s\n", err.Error())
 				continue
 			}
 
-			if user, err := s.store.GetUserById(msg.UserMessage.UserId); err == nil{
+			if user, err := s.store.GetUserById(msg.UserMessage.UserId); err == nil {
 				room.BroadcastMessage(
 					models.ResponseMessage{
-						Message:msg.UserMessage.Message, 
-						FromUser:user.Name, 
+						Message:     msg.UserMessage.Message,
+						FromUser:    user.Name,
 						ErrorStatus: false,
-					}, 
+					},
 					user,
 				)
 			} else {
@@ -105,7 +105,7 @@ func (s *Server) handleCreateRoom(w http.ResponseWriter, r *http.Request) error 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
-	if err := decoder.Decode(&room); err != nil{
+	if err := decoder.Decode(&room); err != nil {
 		var unmarshallErr *json.UnmarshalTypeError
 
 		if errors.As(err, &unmarshallErr) {
@@ -122,7 +122,7 @@ func (s *Server) handleCreateRoom(w http.ResponseWriter, r *http.Request) error 
 		return &models.BadRequestError{Message: err.Error()}
 	}
 
-	writeJSON(w,http.StatusOK, retRoom)
+	writeJSON(w, http.StatusOK, retRoom)
 
 	return nil
 }
@@ -145,8 +145,8 @@ func (s *Server) handleGetRoomById(w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 
-	writeJSON(w,http.StatusOK, room)
-	
+	writeJSON(w, http.StatusOK, room)
+
 	return nil
 }
 
@@ -158,10 +158,10 @@ func (s *Server) handleRemoveRoomById(w http.ResponseWriter, r *http.Request) er
 
 	room, err := s.store.RemoveRoomById(id)
 	if err != nil {
-		return err 
+		return err
 	}
 
-	writeJSON(w,http.StatusOK, room)
+	writeJSON(w, http.StatusOK, room)
 
 	return nil
 }
@@ -186,8 +186,8 @@ func (s *Server) handleGetUserById(w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 
-	writeJSON(w,http.StatusOK, user)
-	
+	writeJSON(w, http.StatusOK, user)
+
 	return nil
 }
 
@@ -199,10 +199,10 @@ func (s *Server) handleRemoveUserById(w http.ResponseWriter, r *http.Request) er
 
 	user, err := s.store.RemoveUserById(id)
 	if err != nil {
-		return err 
+		return err
 	}
 
-	writeJSON(w,http.StatusOK, user)
+	writeJSON(w, http.StatusOK, user)
 
 	return nil
 }
@@ -213,7 +213,7 @@ func (s *Server) handleUpdateUserById(w http.ResponseWriter, r *http.Request) er
 	}
 
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
-	if err != nil{
+	if err != nil {
 		return &models.BadRequestError{Message: "id type needs to be integer"}
 	}
 	user, err := s.store.GetUserById(id)
@@ -225,7 +225,7 @@ func (s *Server) handleUpdateUserById(w http.ResponseWriter, r *http.Request) er
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
-	if err := decoder.Decode(user); err != nil{
+	if err := decoder.Decode(user); err != nil {
 		var unmarshallErr *json.UnmarshalTypeError
 
 		if errors.As(err, &unmarshallErr) {
@@ -242,7 +242,7 @@ func (s *Server) handleUpdateUserById(w http.ResponseWriter, r *http.Request) er
 		return &models.BadRequestError{Message: err.Error()}
 	}
 
-	writeJSON(w,http.StatusOK, retUser)
+	writeJSON(w, http.StatusOK, retUser)
 
 	return nil
 
@@ -257,7 +257,7 @@ func (s *Server) handleCreateUser(w http.ResponseWriter, r *http.Request) error 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
-	if err := decoder.Decode(&user); err != nil{
+	if err := decoder.Decode(&user); err != nil {
 		var unmarshallErr *json.UnmarshalTypeError
 
 		if errors.As(err, &unmarshallErr) {
@@ -273,7 +273,7 @@ func (s *Server) handleCreateUser(w http.ResponseWriter, r *http.Request) error 
 		return &models.BadRequestError{Message: err.Error()}
 	}
 
-	writeJSON(w,http.StatusOK, retUser)
+	writeJSON(w, http.StatusOK, retUser)
 
 	return nil
 }

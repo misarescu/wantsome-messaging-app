@@ -65,20 +65,20 @@ func NewMemoryStorage() *MemoryStorage {
 		},
 		rooms: map[int]*models.Room{
 			1: {
-				Id: 1,
-				Name: "Boys",
+				Id:              1,
+				Name:            "Boys",
 				UserConnections: make(map[*websocket.Conn]*models.User),
 			},
 			2: {
-				Id: 2,
-				Name: "Girls",
+				Id:              2,
+				Name:            "Girls",
 				UserConnections: make(map[*websocket.Conn]*models.User),
 			},
 		},
 	}
 }
 
-func (s *MemoryStorage) CreateUser(user models.UserDTO) (*models.User, error){
+func (s *MemoryStorage) CreateUser(user models.UserDTO) (*models.User, error) {
 	um.Lock()
 	// find if username is unique
 	for _, usr := range s.users {
@@ -90,7 +90,7 @@ func (s *MemoryStorage) CreateUser(user models.UserDTO) (*models.User, error){
 
 	// generate new ids until it finds a unique one
 	id := rand.Int()
-	for _, ok := s.users[id]; ok ;{
+	for _, ok := s.users[id]; ok; {
 		id = rand.Int()
 	}
 	loggers.WarningLogger.Printf("found unique id: %d", id)
@@ -148,7 +148,7 @@ func (s *MemoryStorage) UpdateUser(u *models.User) (*models.User, error) {
 	}
 }
 
-func (s *MemoryStorage) CreateRoom(room models.Room) (*models.Room, error){
+func (s *MemoryStorage) CreateRoom(room models.Room) (*models.Room, error) {
 	rm.Lock()
 	// find if room name is unique
 	for _, roomIt := range s.rooms {
@@ -160,20 +160,20 @@ func (s *MemoryStorage) CreateRoom(room models.Room) (*models.Room, error){
 
 	// generate new ids until it finds a unique one
 	id := rand.Int()
-	for _, ok := s.users[id]; ok ;{
+	for _, ok := s.users[id]; ok; {
 		id = rand.Int()
 	}
 
 	loggers.WarningLogger.Printf("found unique id: %d", id)
-	newRoom := &models.Room{UserConnections: make(map[*websocket.Conn]*models.User),Name: room.Name,Id:id,}
+	newRoom := &models.Room{UserConnections: make(map[*websocket.Conn]*models.User), Name: room.Name, Id: id}
 
 	s.rooms[id] = newRoom
 	rm.Unlock()
-	
+
 	return newRoom, nil
 }
 
-func (s *MemoryStorage) GetAllRooms() ([]*models.Room, error){
+func (s *MemoryStorage) GetAllRooms() ([]*models.Room, error) {
 	var result []*models.Room
 	rm.Lock()
 	for _, room := range s.rooms {
@@ -185,16 +185,16 @@ func (s *MemoryStorage) GetAllRooms() ([]*models.Room, error){
 
 func (s *MemoryStorage) GetRoomById(id int) (*models.Room, error) {
 	rm.Lock()
-	if room, ok := s.rooms[id]; ok{
+	if room, ok := s.rooms[id]; ok {
 		rm.Unlock()
 		return room, nil
 	} else {
 		rm.Unlock()
-		return nil, &models.NotFoundError{Id:id}
+		return nil, &models.NotFoundError{Id: id}
 	}
 }
 
-func (s *MemoryStorage) RemoveRoomById(id int) (*models.Room, error){
+func (s *MemoryStorage) RemoveRoomById(id int) (*models.Room, error) {
 	rm.Lock()
 	if room, ok := s.rooms[id]; ok {
 		delete(s.rooms, room.Id)
@@ -202,6 +202,6 @@ func (s *MemoryStorage) RemoveRoomById(id int) (*models.Room, error){
 		return room, nil
 	} else {
 		rm.Unlock()
-		return nil, &models.NotFoundError{Id:id}
+		return nil, &models.NotFoundError{Id: id}
 	}
 }

@@ -15,7 +15,7 @@ func makeHandler(f apiHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// handle bad requests
 		if err := f(w, r); err != nil {
-			writeJSON(w, http.StatusBadRequest, models.ResponseMessage{Message: err.Error(),ErrorStatus: true})
+			writeJSON(w, http.StatusBadRequest, models.ResponseMessage{Message: err.Error(), ErrorStatus: true})
 		}
 	}
 }
@@ -24,7 +24,7 @@ func makeWsHandler(f apiHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// handle bad requests
 		if err := f(w, r); err != nil {
-			loggers.ErrorLogger.Printf("error with: %+v\n", models.ResponseMessage{Message: err.Error(),ErrorStatus: true})
+			loggers.ErrorLogger.Printf("error with: %+v\n", models.ResponseMessage{Message: err.Error(), ErrorStatus: true})
 		}
 	}
 }
