@@ -11,7 +11,7 @@ func main() {
 
 	flag.Parse()
 
-	c := client.NewClient("ws://localhost:8080/chatroom",*roomId,*userId,)
-	
+	c := client.NewClient("ws://localhost:8080/chatroom", *roomId, *userId)
+
 	c.RunClient()
 }

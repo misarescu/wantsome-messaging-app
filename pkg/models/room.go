@@ -9,17 +9,17 @@ import (
 )
 
 type Room struct {
-	m               sync.Mutex `json:"-"`
+	m               sync.Mutex                `json:"-"`
 	UserConnections map[*websocket.Conn]*User `json:"-"`
-	Id              int `json:"id,omitempty"` // id 0 is forbidden
-	Name						string `json:"name"`
+	Id              int                       `json:"id,omitempty"` // id 0 is forbidden
+	Name            string                    `json:"name"`
 }
 
 func (r *Room) CreateConnection(connection *websocket.Conn, user *User) error {
 	// create connection only if it doesn't exist
 	r.m.Lock()
 	if _, ok := r.UserConnections[connection]; !ok {
-		
+
 		r.UserConnections[connection] = user
 		r.m.Unlock()
 		return nil
@@ -77,8 +77,8 @@ func (r *Room) BroadcastMessage(msg ResponseMessage, ignoreUser *User) error {
 	r.m.Lock()
 	loggers.InfoLogger.Printf("connections present: %+v\n", r.UserConnections)
 	for conn, user := range r.UserConnections {
-		if user != ignoreUser{
-			err := conn.WriteJSON(msg);
+		if user != ignoreUser {
+			err := conn.WriteJSON(msg)
 			if err != nil {
 				user := r.UserConnections[conn]
 				berr.Users = append(berr.Users, user)

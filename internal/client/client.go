@@ -11,17 +11,16 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-
 type Client struct {
-	Url string
+	Url    string
 	UserId int
 	RoomId int
 }
 
-func NewClient(baseurl string, roomId, userId int) *Client{
+func NewClient(baseurl string, roomId, userId int) *Client {
 	// baseurl := "ws://localhost:8080/chatroom"
 	return &Client{
-		Url: fmt.Sprintf("%s/%d", baseurl, roomId),
+		Url:    fmt.Sprintf("%s/%d", baseurl, roomId),
 		UserId: userId,
 		RoomId: roomId,
 	}
@@ -66,7 +65,7 @@ func (c *Client) RunClient() {
 		reader := bufio.NewReader(os.Stdin)
 		for {
 			inputMessage, _ := reader.ReadString('\n')
-			if inputMessage == "(exit)\n"{
+			if inputMessage == "(exit)\n" {
 				fmt.Println("quit...")
 				done <- true
 			}
@@ -75,7 +74,7 @@ func (c *Client) RunClient() {
 				log.Printf("error writing %s\n", err)
 				return
 			}
-			fmt.Printf("->\t%s\n",inputMessage)
+			fmt.Printf("->\t%s\n", inputMessage)
 		}
 	}()
 

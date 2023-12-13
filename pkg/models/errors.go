@@ -22,7 +22,7 @@ func (e *BroadcastError) Error() string {
 	return fmt.Sprintf("Error broadcasting to connections with ids:\n %d\n", idSlice)
 }
 
-type ConnectionError struct {}
+type ConnectionError struct{}
 
 func (e *ConnectionError) Error() string {
 	return "Connection error"
